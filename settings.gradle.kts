@@ -21,4 +21,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "RollCall"
 include(":app")
- 
+include(":domain")
+include(":data")
