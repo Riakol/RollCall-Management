@@ -26,5 +26,7 @@ data class StudentEntity(
     val birthDate: Long,
     val phoneNumber: String?,
     val parentPhone: String?,
-    val photoUrl: String? = null
+    val photoUrl: String? = null,
+    val healthInfo: String? = null,
+    val teacherNotes: String? = null
 )

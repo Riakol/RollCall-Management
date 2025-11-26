@@ -19,9 +19,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Notes
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,6 +34,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -59,12 +61,20 @@ import com.riakol.rollcall.ui.theme.TextWhite
 @Composable
 fun StudentProfileScreen(
     navController: NavController,
+    onEditClick: (Long) -> Unit,
     viewModel: StudentProfileViewModel = hiltViewModel()
 ) {
     val name by viewModel.studentName.collectAsState()
     val info by viewModel.studentInfo.collectAsState()
+    val notes by viewModel.teacherNotes.collectAsState()
     val scrollState = rememberScrollState()
 
+    // Обновляем данные при входе на экран (если вернулись с редактирования)
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
+
+    // Градиент для аватара
     val avatarGradient = Brush.linearGradient(
         colors = listOf(Color(0xFF7B61FF), Color(0xFFE040FB))
     )
@@ -79,6 +89,15 @@ fun StudentProfileScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
+                            tint = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { onEditClick(viewModel.studentId) }) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = "Edit",
                             tint = Color.White
                         )
                     }
@@ -123,7 +142,7 @@ fun StudentProfileScreen(
                 )
             )
 
-            // Подзаголовок
+            // Подзаголовок (Класс • Возраст)
             Text(
                 text = info,
                 style = MaterialTheme.typography.bodyLarge.copy(
@@ -154,7 +173,7 @@ fun StudentProfileScreen(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 ActionCard(
-                    icon = Icons.AutoMirrored.Filled.Notes,
+                    icon = Icons.Default.Notes,
                     label = "Заметка",
                     iconTint = TextGray,
                     modifier = Modifier.weight(1f)
@@ -162,6 +181,47 @@ fun StudentProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+
+            // --- TEACHER NOTES CARD ---
+            if (!notes.isNullOrBlank()) {
+                Surface(
+                    color = SurfaceDark,
+                    shape = RoundedCornerShape(16.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF333333)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = PrimaryBlue,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "Заметка учителя",
+                                color = TextWhite,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = notes ?: "",
+                                color = TextGray,
+                                fontSize = 14.sp,
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
 
             // --- STATS CARD ---
             Surface(
@@ -217,6 +277,7 @@ fun StudentProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp)
             ) {
                 Text(
                     text = "История последних пропусков",
@@ -318,7 +379,7 @@ fun CircularChart(
 fun getInitials(name: String): String {
     val parts = name.split(" ")
     return if (parts.size >= 2) {
-        "${parts[0].first()}${parts[1].first()}"
+        "${parts[0].firstOrNull() ?: ""}${parts[1].firstOrNull() ?: ""}"
     } else {
         name.take(2).uppercase()
     }

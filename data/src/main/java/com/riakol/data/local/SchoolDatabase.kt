@@ -18,7 +18,7 @@ import com.riakol.data.local.entity.SubjectEntity
         LessonEntity::class,
         AttendanceEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

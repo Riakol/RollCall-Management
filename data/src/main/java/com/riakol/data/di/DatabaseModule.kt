@@ -19,10 +19,11 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): SchoolDatabase {
         return Room.databaseBuilder(
-            context,
-            SchoolDatabase::class.java,
-            "school_db"
-        ).build()
+                context,
+                SchoolDatabase::class.java,
+                "school_db"
+            ).fallbackToDestructiveMigration(false)
+            .build()
     }
 
     @Provides

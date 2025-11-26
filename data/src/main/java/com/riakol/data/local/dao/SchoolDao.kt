@@ -14,6 +14,14 @@ import com.riakol.data.local.relations.LessonWithDetails
 import com.riakol.domain.model.AttendanceType
 import kotlinx.coroutines.flow.Flow
 
+data class StudentWithClassName(
+    val studentId: Long,
+    val firstName: String,
+    val lastName: String,
+    val className: String,
+    val photoUrl: String?
+)
+
 @Dao
 interface SchoolDao {
 
@@ -38,6 +46,12 @@ interface SchoolDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertClass(classEntity: ClassEntity)
 
+    @Update
+    suspend fun updateClass(classEntity: ClassEntity)
+
+    @Query("DELETE FROM classes WHERE classId = :classId")
+    suspend fun deleteClass(classId: Long)
+
     @Query("SELECT * FROM classes")
     fun getAllClasses(): Flow<List<ClassEntity>>
 
@@ -53,6 +67,25 @@ interface SchoolDao {
 
     @Query("SELECT * FROM students WHERE studentId = :studentId")
     suspend fun getStudentById(studentId: Long): StudentEntity?
+
+    @Query("DELETE FROM students WHERE studentId = :studentId")
+    suspend fun deleteStudent(studentId: Long)
+
+    @Query("""
+        SELECT s.*, c.name as className 
+        FROM students s 
+        JOIN classes c ON s.classId = c.classId 
+        ORDER BY s.lastName ASC
+    """)
+    fun getAllStudentsWithClass(): Flow<List<StudentEntity>>
+
+    @Query("""
+        SELECT s.studentId, s.firstName, s.lastName, s.photoUrl, c.name as className
+        FROM students s
+        JOIN classes c ON s.classId = c.classId
+        ORDER BY s.lastName ASC
+    """)
+    fun getAllStudentsListItems(): Flow<List<StudentWithClassName>>
 
     // --- ПОСЕЩАЕМОСТЬ (ATTENDANCE SCREEN) ---
     /**

@@ -41,17 +41,18 @@ import com.riakol.rollcall.ui.theme.TextWhite
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddClassBottomSheet(
+    initialName: String = "",
+    initialDescription: String = "",
     onDismiss: () -> Unit,
     onSave: (String, String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Локальное состояние полей ввода
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
 
-    // Валидация
     val isFormValid = name.isNotBlank()
+    val isEditMode = initialName.isNotBlank()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -68,7 +69,7 @@ fun AddClassBottomSheet(
                 .padding(bottom = 48.dp)
         ) {
             Text(
-                text = "Новый класс",
+                text = if (isEditMode) "Редактировать класс" else "Новый класс",
                 style = MaterialTheme.typography.headlineSmall.copy(
                     fontWeight = FontWeight.Bold,
                     color = TextWhite
@@ -125,9 +126,7 @@ fun AddClassBottomSheet(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
-                TextButton(
-                    onClick = onDismiss
-                ) {
+                TextButton(onClick = onDismiss) {
                     Text("Отмена", color = TextGray, fontSize = 16.sp)
                 }
 
@@ -144,7 +143,7 @@ fun AddClassBottomSheet(
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Создать", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text(if (isEditMode) "Сохранить" else "Создать", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
