@@ -9,6 +9,7 @@ import androidx.room.Update
 import com.riakol.data.local.entity.AttendanceEntity
 import com.riakol.data.local.entity.ClassEntity
 import com.riakol.data.local.entity.StudentEntity
+import com.riakol.data.local.relations.ClassWithStudentsRelation
 import com.riakol.data.local.relations.LessonWithDetails
 import com.riakol.domain.model.AttendanceType
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +27,17 @@ interface SchoolDao {
     fun getLessonsInRange(start: Long, end: Long): Flow<List<LessonWithDetails>>
 
     // --- КЛАССЫ (MY CLASSES SCREEN) ---
+    @Transaction
+    @Query("SELECT * FROM classes")
+    fun getClassesWithStudents(): Flow<List<ClassWithStudentsRelation>>
+
+    @Transaction
+    @Query("SELECT * FROM classes WHERE classId = :id")
+    suspend fun getClassWithStudentsById(id: Long): ClassWithStudentsRelation?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertClass(classEntity: ClassEntity)
+
     @Query("SELECT * FROM classes")
     fun getAllClasses(): Flow<List<ClassEntity>>
 

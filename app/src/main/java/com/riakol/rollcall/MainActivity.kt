@@ -8,10 +8,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.riakol.rollcall.classes.ClassesScreen
 import com.riakol.rollcall.components.BottomNavigationBar
+import com.riakol.rollcall.group.GroupScreen
 import com.riakol.rollcall.home.HomeScreen
 import com.riakol.rollcall.navigation.BottomNavItem
 import com.riakol.rollcall.ui.theme.RollCallTheme
@@ -48,7 +52,17 @@ fun MainAppScreen() {
                 HomeScreen()
             }
             composable(BottomNavItem.Classes.route) {
-                // Placeholder
+                ClassesScreen(
+                    onClassClick = { classId ->
+                        navController.navigate("group/$classId")
+                    }
+                )
+            }
+            composable(
+                route = "group/{classId}",
+                arguments = listOf(navArgument("classId") { type = NavType.LongType })
+            ) {
+                GroupScreen(navController = navController)
             }
             composable(BottomNavItem.Reports.route) {
                 // Placeholder

@@ -4,6 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Relation
 import com.riakol.data.local.entity.ClassEntity
 import com.riakol.data.local.entity.LessonEntity
+import com.riakol.data.local.entity.StudentEntity
 import com.riakol.data.local.entity.SubjectEntity
 
 /**
@@ -25,4 +26,14 @@ data class LessonWithDetails(
         entityColumn = "classId"
     )
     val classInfo: ClassEntity
+)
+
+data class ClassWithStudentsRelation(
+    @Embedded val classEntity: ClassEntity,
+
+    @Relation(
+        parentColumn = "classId",
+        entityColumn = "classId"
+    )
+    val students: List<StudentEntity>
 )

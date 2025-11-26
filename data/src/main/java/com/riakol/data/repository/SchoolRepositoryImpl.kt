@@ -1,10 +1,12 @@
 package com.riakol.data.repository
 
 import com.riakol.data.local.dao.SchoolDao
+import com.riakol.data.local.entity.ClassEntity
 import com.riakol.data.mapper.toDomain
 import com.riakol.data.mapper.toEntity
 import com.riakol.domain.model.AttendanceRecord
 import com.riakol.domain.model.Lesson
+import com.riakol.domain.model.SchoolClass
 import com.riakol.domain.model.Student
 import com.riakol.domain.repository.SchoolRepository
 import jakarta.inject.Inject
@@ -42,5 +44,39 @@ class SchoolRepositoryImpl @Inject constructor(
             record.toEntity()
         }
         dao.insertAttendance(entities)
+    }
+
+    override fun getAllClasses(): Flow<List<SchoolClass>> {
+        return dao.getClassesWithStudents().map { relations ->
+            relations.map { relation ->
+                SchoolClass(
+                    id = relation.classEntity.classId,
+                    name = relation.classEntity.name,
+                    description = relation.classEntity.description,
+                    studentCount = relation.students.size,
+                    previewStudents = relation.students.take(3).map { it.toDomain() }
+                )
+            }
+        }
+    }
+
+    override suspend fun getClassById(classId: Long): SchoolClass? {
+        val relation = dao.getClassWithStudentsById(classId) ?: return null
+
+        return SchoolClass(
+            id = relation.classEntity.classId,
+            name = relation.classEntity.name,
+            description = relation.classEntity.description,
+            studentCount = relation.students.size,
+            previewStudents = relation.students.take(3).map { it.toDomain() }
+        )
+    }
+
+    override suspend fun createClass(name: String, description: String?) {
+        val newClass = ClassEntity(
+            name = name,
+            description = description
+        )
+        dao.insertClass(newClass)
     }
 }
