@@ -18,6 +18,7 @@ import com.riakol.rollcall.components.BottomNavigationBar
 import com.riakol.rollcall.group.GroupScreen
 import com.riakol.rollcall.home.HomeScreen
 import com.riakol.rollcall.navigation.BottomNavItem
+import com.riakol.rollcall.student.StudentProfileScreen
 import com.riakol.rollcall.ui.theme.RollCallTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -62,8 +63,21 @@ fun MainAppScreen() {
                 route = "group/{classId}",
                 arguments = listOf(navArgument("classId") { type = NavType.LongType })
             ) {
-                GroupScreen(navController = navController)
+                GroupScreen(
+                    navController = navController,
+                    onStudentClick = { studentId ->
+                        navController.navigate("student/$studentId")
+                    }
+                )
             }
+
+            composable(
+                route = "student/{studentId}",
+                arguments = listOf(navArgument("studentId") { type = NavType.LongType })
+            ) {
+                StudentProfileScreen(navController = navController)
+            }
+
             composable(BottomNavItem.Reports.route) {
                 // Placeholder
             }

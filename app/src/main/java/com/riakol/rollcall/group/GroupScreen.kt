@@ -43,6 +43,7 @@ import com.riakol.rollcall.ui.theme.TextGray
 @Composable
 fun GroupScreen(
     navController: NavController,
+    onStudentClick: (Long) -> Unit,
     viewModel: GroupViewModel = hiltViewModel()
 ) {
     val students by viewModel.students.collectAsState()
@@ -110,7 +111,10 @@ fun GroupScreen(
                 .padding(padding)
         ) {
             items(students) { student ->
-                StudentItem(student)
+                StudentItem(
+                    student = student,
+                    onClick = { onStudentClick(student.id) }
+                )
                 HorizontalDivider(color = SurfaceDark, thickness = 1.dp)
             }
         }

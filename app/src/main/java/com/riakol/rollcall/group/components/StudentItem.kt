@@ -30,11 +30,14 @@ import com.riakol.rollcall.ui.theme.SurfaceDark
 import com.riakol.rollcall.ui.theme.TextGray
 
 @Composable
-fun StudentItem(student: Student) {
+fun StudentItem(
+    student: Student,
+    onClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Navigate to details */ }
+            .clickable { onClick() }
             .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
