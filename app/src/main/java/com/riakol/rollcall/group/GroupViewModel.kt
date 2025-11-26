@@ -38,4 +38,17 @@ class GroupViewModel @Inject constructor(
             _className.value = schoolClass?.name ?: "Класс"
         }
     }
+
+    fun addStudent(firstName: String, lastName: String, middleName: String, phone: String) {
+        viewModelScope.launch {
+            repository.createStudent(
+                classId = classId,
+                firstName = firstName,
+                lastName = lastName,
+                middleName = middleName.ifBlank { null },
+                phone = phone.ifBlank { null }
+            )
+            loadStudents()
+        }
+    }
 }

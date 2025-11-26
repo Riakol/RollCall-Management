@@ -2,6 +2,7 @@ package com.riakol.data.repository
 
 import com.riakol.data.local.dao.SchoolDao
 import com.riakol.data.local.entity.ClassEntity
+import com.riakol.data.local.entity.StudentEntity
 import com.riakol.data.mapper.toDomain
 import com.riakol.data.mapper.toEntity
 import com.riakol.domain.model.AttendanceRecord
@@ -78,5 +79,25 @@ class SchoolRepositoryImpl @Inject constructor(
             description = description
         )
         dao.insertClass(newClass)
+    }
+
+    override suspend fun createStudent(
+        classId: Long,
+        firstName: String,
+        lastName: String,
+        middleName: String?,
+        phone: String?
+    ) {
+        val student = StudentEntity(
+            classId = classId,
+            firstName = firstName,
+            lastName = lastName,
+            middleName = middleName,
+            birthDate = 0L,
+            phoneNumber = phone,
+            parentPhone = null,
+            photoUrl = null
+        )
+        dao.insertStudent(student)
     }
 }

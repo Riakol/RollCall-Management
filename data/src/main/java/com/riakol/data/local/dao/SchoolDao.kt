@@ -48,6 +48,9 @@ interface SchoolDao {
     @Query("SELECT * FROM students WHERE classId = :classId ORDER BY lastName ASC")
     suspend fun getStudentsByClass(classId: Long): List<StudentEntity>
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStudent(student: StudentEntity)
+
     @Query("SELECT * FROM students WHERE studentId = :studentId")
     suspend fun getStudentById(studentId: Long): StudentEntity?
 

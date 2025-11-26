@@ -13,4 +13,5 @@ interface SchoolRepository {
     fun getAllClasses(): Flow<List<SchoolClass>>
     suspend fun getClassById(classId: Long): SchoolClass?
     suspend fun createClass(name: String, description: String?)
+    suspend fun createStudent(classId: Long, firstName: String, lastName: String, middleName: String?, phone: String?)
 }

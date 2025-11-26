@@ -21,6 +21,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.riakol.rollcall.group.components.AddStudentBottomSheet
 import com.riakol.rollcall.group.components.StudentItem
 import com.riakol.rollcall.ui.theme.BackgroundDark
 import com.riakol.rollcall.ui.theme.PrimaryBlue
@@ -43,6 +47,18 @@ fun GroupScreen(
 ) {
     val students by viewModel.students.collectAsState()
     val className by viewModel.className.collectAsState()
+
+    var showAddStudentSheet by remember { mutableStateOf(false) }
+
+    if (showAddStudentSheet) {
+        AddStudentBottomSheet(
+            onDismiss = { showAddStudentSheet = false },
+            onSave = { firstName, lastName, middleName, phone ->
+                viewModel.addStudent(firstName, lastName, middleName, phone)
+                showAddStudentSheet = false
+            }
+        )
+    }
 
     Scaffold(
         containerColor = BackgroundDark,
@@ -80,7 +96,7 @@ fun GroupScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO: Add Student */ },
+                onClick = { showAddStudentSheet = true },
                 containerColor = PrimaryBlue,
                 contentColor = Color.White
             ) {
