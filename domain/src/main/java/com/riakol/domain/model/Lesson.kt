@@ -9,5 +9,7 @@ data class Lesson(
     val startTime: LocalDateTime,
     val endTime: LocalDateTime,
     val roomNumber: String,
-    val isFinished: Boolean
+    val isFinished: Boolean,
+    val presentCount: Int = 0,
+    val totalStudents: Int = 0
 )

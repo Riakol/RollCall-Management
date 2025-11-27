@@ -22,6 +22,18 @@ data class StudentWithClassName(
     val photoUrl: String?
 )
 
+data class LessonStatsTuple(
+    val lessonId: Long,
+    val subjectName: String,
+    val className: String,
+    val startTime: Long,
+    val endTime: Long,
+    val roomNumber: String,
+    val isFinished: Boolean,
+    val totalStudents: Int,
+    val presentCount: Int
+)
+
 @Dao
 interface SchoolDao {
 
@@ -33,6 +45,25 @@ interface SchoolDao {
     @Transaction
     @Query("SELECT * FROM lessons WHERE startTime BETWEEN :start AND :end ORDER BY startTime ASC")
     fun getLessonsInRange(start: Long, end: Long): Flow<List<LessonWithDetails>>
+
+    @Query("""
+        SELECT 
+            l.lessonId, 
+            s.name AS subjectName, 
+            c.name AS className, 
+            l.startTime, 
+            l.endTime, 
+            l.roomNumber, 
+            l.isFinished,
+            (SELECT COUNT(*) FROM students st WHERE st.classId = l.classId) AS totalStudents,
+            (SELECT COUNT(*) FROM attendance a WHERE a.lessonId = l.lessonId AND (a.status = 'PRESENT' OR a.status = 'LATE')) AS presentCount
+        FROM lessons l
+        INNER JOIN subjects s ON l.subjectId = s.subjectId
+        INNER JOIN classes c ON l.classId = c.classId
+        WHERE l.startTime BETWEEN :start AND :end
+        ORDER BY l.startTime ASC
+    """)
+    fun getLessonsWithStatsInRange(start: Long, end: Long): Flow<List<LessonStatsTuple>>
 
     // --- КЛАССЫ (MY CLASSES SCREEN) ---
     @Transaction
@@ -93,6 +124,9 @@ interface SchoolDao {
      */
     @Query("SELECT * FROM attendance WHERE lessonId = :lessonId")
     suspend fun getAttendanceForLesson(lessonId: Long): List<AttendanceEntity>
+
+    @Query("SELECT count(*) FROM attendance WHERE lessonId = :lessonId AND (status = 'PRESENT' OR status = 'LATE')")
+    suspend fun getPresentCountForLesson(lessonId: Long): Int
 
     /**
      * Сохраняет или обновляет список отметок.

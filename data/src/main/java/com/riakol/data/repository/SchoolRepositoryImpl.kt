@@ -22,19 +22,6 @@ class SchoolRepositoryImpl @Inject constructor(
     private val dao: SchoolDao
 ) : SchoolRepository {
 
-    override fun getLessonsForDate(date: Long): Flow<List<Lesson>> {
-        val zoneId = ZoneId.systemDefault()
-        val localDate = Instant.ofEpochMilli(date).atZone(zoneId).toLocalDate()
-
-        val startOfDay = localDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
-
-        val endOfDay = localDate.atTime(LocalTime.MAX).atZone(zoneId).toInstant().toEpochMilli()
-
-        return dao.getLessonsInRange(startOfDay, endOfDay).map { list ->
-            list.map { it.toDomain() }
-        }
-    }
-
     override suspend fun getStudentsByClass(classId: Long): List<Student> {
         return dao.getStudentsByClass(classId).map { entity ->
             entity.toDomain()
@@ -181,5 +168,29 @@ class SchoolRepositoryImpl @Inject constructor(
             teacherNotes = notes
         )
         dao.insertStudent(entity)
+    }
+
+    override fun getLessonsForDate(date: Long): Flow<List<Lesson>> {
+        val zoneId = ZoneId.systemDefault()
+        val localDate = Instant.ofEpochMilli(date).atZone(zoneId).toLocalDate()
+
+        val startOfDay = localDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
+        val endOfDay = localDate.atTime(LocalTime.MAX).atZone(zoneId).toInstant().toEpochMilli()
+
+        return dao.getLessonsWithStatsInRange(startOfDay, endOfDay).map { list ->
+            list.map { item ->
+                Lesson(
+                    id = item.lessonId,
+                    subjectName = item.subjectName,
+                    className = item.className,
+                    startTime = Instant.ofEpochMilli(item.startTime).atZone(zoneId).toLocalDateTime(),
+                    endTime = Instant.ofEpochMilli(item.endTime).atZone(zoneId).toLocalDateTime(),
+                    roomNumber = item.roomNumber,
+                    isFinished = item.isFinished,
+                    presentCount = item.presentCount,
+                    totalStudents = item.totalStudents
+                )
+            }
+        }
     }
 }
