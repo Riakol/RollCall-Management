@@ -11,5 +11,6 @@ data class Lesson(
     val roomNumber: String,
     val isFinished: Boolean,
     val presentCount: Int = 0,
-    val totalStudents: Int = 0
+    val totalStudents: Int = 0,
+    val color: String? = null
 )

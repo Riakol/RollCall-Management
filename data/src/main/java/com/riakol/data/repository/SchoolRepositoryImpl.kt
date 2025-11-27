@@ -2,7 +2,9 @@ package com.riakol.data.repository
 
 import com.riakol.data.local.dao.SchoolDao
 import com.riakol.data.local.entity.ClassEntity
+import com.riakol.data.local.entity.LessonEntity
 import com.riakol.data.local.entity.StudentEntity
+import com.riakol.data.local.entity.SubjectEntity
 import com.riakol.data.mapper.toDomain
 import com.riakol.data.mapper.toEntity
 import com.riakol.data.util.calculateAge
@@ -15,6 +17,7 @@ import jakarta.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 
@@ -190,6 +193,100 @@ class SchoolRepositoryImpl @Inject constructor(
                     presentCount = item.presentCount,
                     totalStudents = item.totalStudents
                 )
+            }
+        }
+    }
+
+    override suspend fun getLessonById(lessonId: Long): Lesson? {
+        val entity = dao.getLessonById(lessonId) ?: return null
+        val subject = dao.getSubjectById(entity.subjectId)
+        val classInfo = dao.getClassWithStudentsById(entity.classId)?.classEntity
+
+        return Lesson(
+            id = entity.lessonId,
+            subjectName = subject?.name ?: "Unknown",
+            className = classInfo?.name ?: "Unknown",
+            startTime = Instant.ofEpochMilli(entity.startTime).atZone(ZoneId.systemDefault()).toLocalDateTime(),
+            endTime = Instant.ofEpochMilli(entity.endTime).atZone(ZoneId.systemDefault()).toLocalDateTime(),
+            roomNumber = entity.roomNumber,
+            isFinished = entity.isFinished,
+            color = entity.color
+        )
+    }
+
+    override suspend fun deleteLesson(lessonId: Long) {
+        dao.deleteLesson(lessonId)
+    }
+
+    override suspend fun saveLesson(
+        lessonId: Long,
+        classId: Long,
+        subjectName: String,
+        date: LocalDate,
+        startTime: LocalTime,
+        endTime: LocalTime,
+        room: String,
+        color: String?,
+        repeatDays: List<Int>
+    ) {
+        var subject = dao.getSubjectByName(subjectName)
+        val subjectId = subject?.subjectId ?: dao.insertSubject(SubjectEntity(name = subjectName))
+
+        val zoneId = ZoneId.systemDefault()
+
+        if (lessonId != 0L) {
+            val startMillis = date.atTime(startTime).atZone(zoneId).toInstant().toEpochMilli()
+            val endMillis = date.atTime(endTime).atZone(zoneId).toInstant().toEpochMilli()
+
+            val lesson = dao.getLessonById(lessonId)?.copy(
+                classId = classId,
+                subjectId = subjectId,
+                startTime = startMillis,
+                endTime = endMillis,
+                roomNumber = room,
+                color = color
+            )
+            if (lesson != null) dao.updateLesson(lesson)
+
+        } else {
+            if (repeatDays.isEmpty()) {
+                val startMillis = date.atTime(startTime).atZone(zoneId).toInstant().toEpochMilli()
+                val endMillis = date.atTime(endTime).atZone(zoneId).toInstant().toEpochMilli()
+
+                dao.insertLesson(
+                    LessonEntity(
+                        classId = classId,
+                        subjectId = subjectId,
+                        startTime = startMillis,
+                        endTime = endMillis,
+                        roomNumber = room,
+                        color = color
+                    )
+                )
+            } else {
+                var currentDate = date
+                val endDate = date.plusDays(28)
+
+                while (currentDate.isBefore(endDate)) {
+                    if (repeatDays.contains(currentDate.dayOfWeek.value)) {
+                        val startMillis =
+                            currentDate.atTime(startTime).atZone(zoneId).toInstant().toEpochMilli()
+                        val endMillis =
+                            currentDate.atTime(endTime).atZone(zoneId).toInstant().toEpochMilli()
+
+                        dao.insertLesson(
+                            LessonEntity(
+                                classId = classId,
+                                subjectId = subjectId,
+                                startTime = startMillis,
+                                endTime = endMillis,
+                                roomNumber = room,
+                                color = color
+                            )
+                        )
+                    }
+                    currentDate = currentDate.plusDays(1)
+                }
             }
         }
     }

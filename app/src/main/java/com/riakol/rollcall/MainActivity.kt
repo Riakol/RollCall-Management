@@ -18,6 +18,7 @@ import com.riakol.rollcall.classes.ClassesScreen
 import com.riakol.rollcall.components.BottomNavigationBar
 import com.riakol.rollcall.group.GroupScreen
 import com.riakol.rollcall.home.HomeScreen
+import com.riakol.rollcall.lesson.AddEditLessonScreen
 import com.riakol.rollcall.navigation.BottomNavItem
 import com.riakol.rollcall.student.AddEditStudentScreen
 import com.riakol.rollcall.student.StudentProfileScreen
@@ -53,7 +54,10 @@ fun MainAppScreen() {
         ) {
             // 1. Главная
             composable(BottomNavItem.Home.route) {
-                HomeScreen()
+                HomeScreen(
+                    navController = navController,
+                    viewModel = hiltViewModel()
+                )
             }
 
             // 2. Вкладка "Классы" (с табами и списком всех учеников)
@@ -99,6 +103,16 @@ fun MainAppScreen() {
                 arguments = listOf(navArgument("studentId") { type = NavType.LongType })
             ) {
                 AddEditStudentScreen(navController = navController)
+            }
+
+            composable(
+                route = "lesson_edit/{lessonId}?date={date}",
+                arguments = listOf(
+                    navArgument("lessonId") { type = NavType.LongType; defaultValue = 0L },
+                    navArgument("date") { type = NavType.LongType; defaultValue = 0L }
+                )
+            ) {
+                AddEditLessonScreen(navController = navController)
             }
 
             composable(BottomNavItem.Reports.route) {

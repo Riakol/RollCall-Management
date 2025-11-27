@@ -8,7 +8,9 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.riakol.data.local.entity.AttendanceEntity
 import com.riakol.data.local.entity.ClassEntity
+import com.riakol.data.local.entity.LessonEntity
 import com.riakol.data.local.entity.StudentEntity
+import com.riakol.data.local.entity.SubjectEntity
 import com.riakol.data.local.relations.ClassWithStudentsRelation
 import com.riakol.data.local.relations.LessonWithDetails
 import com.riakol.domain.model.AttendanceType
@@ -152,4 +154,27 @@ interface SchoolDao {
      */
     @Query("SELECT count(DISTINCT lessonId) FROM attendance WHERE studentId = :studentId")
     suspend fun getTotalLessonsCountForStudent(studentId: Long): Int
+
+    // --- УПРАВЛЕНИЕ УРОКАМИ ---
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLesson(lesson: LessonEntity): Long
+
+    @Update
+    suspend fun updateLesson(lesson: LessonEntity)
+
+    @Query("DELETE FROM lessons WHERE lessonId = :lessonId")
+    suspend fun deleteLesson(lessonId: Long)
+
+    @Query("SELECT * FROM lessons WHERE lessonId = :lessonId")
+    suspend fun getLessonById(lessonId: Long): LessonEntity?
+
+    // --- ПРЕДМЕТЫ ---
+    @Query("SELECT * FROM subjects WHERE name = :name LIMIT 1")
+    suspend fun getSubjectByName(name: String): SubjectEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSubject(subject: SubjectEntity): Long
+
+    @Query("SELECT * FROM subjects WHERE subjectId = :id")
+    suspend fun getSubjectById(id: Long): SubjectEntity?
 }

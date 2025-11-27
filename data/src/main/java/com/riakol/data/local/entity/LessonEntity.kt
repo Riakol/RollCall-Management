@@ -25,5 +25,6 @@ data class LessonEntity(
     val endTime: Long,
     val roomNumber: String,
     val topic: String? = null,
-    val isFinished: Boolean = false
+    val isFinished: Boolean = false,
+    val color: String? = null
 )

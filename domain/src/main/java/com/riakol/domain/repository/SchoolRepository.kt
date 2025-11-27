@@ -5,11 +5,30 @@ import com.riakol.domain.model.Lesson
 import com.riakol.domain.model.SchoolClass
 import com.riakol.domain.model.Student
 import kotlinx.coroutines.flow.Flow
+import java.time.LocalDate
+import java.time.LocalTime
 
 interface SchoolRepository {
     // --- РАСПИСАНИЕ ---
     fun getLessonsForDate(date: Long): Flow<List<Lesson>>
     suspend fun saveAttendance(lessonId: Long, students: List<AttendanceRecord>)
+    suspend fun getLessonById(lessonId: Long): Lesson?
+    suspend fun deleteLesson(lessonId: Long)
+
+    /**
+     * Сохраняет урок. Если repeatDays не пустой, генерирует уроки на 4 недели вперед.
+     */
+    suspend fun saveLesson(
+        lessonId: Long,
+        classId: Long,
+        subjectName: String,
+        date: LocalDate,
+        startTime: LocalTime,
+        endTime: LocalTime,
+        room: String,
+        color: String?,
+        repeatDays: List<Int>
+    )
 
     // --- КЛАССЫ ---
     fun getAllClasses(): Flow<List<SchoolClass>>
