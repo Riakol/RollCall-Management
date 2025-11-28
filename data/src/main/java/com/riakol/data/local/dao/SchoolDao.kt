@@ -177,4 +177,24 @@ interface SchoolDao {
 
     @Query("SELECT * FROM subjects WHERE subjectId = :id")
     suspend fun getSubjectById(id: Long): SubjectEntity?
+
+    // Для выпадающего списка предметов
+    @Query("SELECT * FROM subjects ORDER BY name ASC")
+    fun getAllSubjects(): Flow<List<SubjectEntity>>
+
+    // Проверка на пересечение уроков для конкретного класса
+    // Логика: (StartA < EndB) and (EndA > StartB)
+    @Query("""
+        SELECT count(*) FROM lessons 
+        WHERE classId = :classId 
+        AND lessonId != :excludeLessonId
+        AND startTime < :endTime 
+        AND endTime > :startTime
+    """)
+    suspend fun checkLessonOverlap(
+        classId: Long,
+        startTime: Long,
+        endTime: Long,
+        excludeLessonId: Long
+    ): Int
 }

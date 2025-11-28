@@ -290,4 +290,20 @@ class SchoolRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override fun getAllSubjects(): Flow<List<String>> {
+        return dao.getAllSubjects().map { entities ->
+            entities.map { it.name }
+        }
+    }
+
+    override suspend fun hasLessonOverlap(
+        classId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        excludeLessonId: Long
+    ): Boolean {
+        val count = dao.checkLessonOverlap(classId, startMillis, endMillis, excludeLessonId)
+        return count > 0
+    }
 }

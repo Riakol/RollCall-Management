@@ -30,6 +30,15 @@ interface SchoolRepository {
         repeatDays: List<Int>
     )
 
+    fun getAllSubjects(): Flow<List<String>>
+
+    suspend fun hasLessonOverlap(
+        classId: Long,
+        startMillis: Long,
+        endMillis: Long,
+        excludeLessonId: Long
+    ): Boolean
+
     // --- КЛАССЫ ---
     fun getAllClasses(): Flow<List<SchoolClass>>
     suspend fun getClassById(classId: Long): SchoolClass?

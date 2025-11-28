@@ -19,12 +19,17 @@ class ClassesViewModel @Inject constructor(
 
     private val _classes = MutableStateFlow<List<SchoolClass>>(emptyList())
     val classes: StateFlow<List<SchoolClass>> = _classes.asStateFlow()
+
     private val _allStudents = MutableStateFlow<Map<Char, List<Student>>>(emptyMap())
     val allStudents: StateFlow<Map<Char, List<Student>>> = _allStudents.asStateFlow()
+
+    private val _subjects = MutableStateFlow<List<String>>(emptyList())
+    val subjects: StateFlow<List<String>> = _subjects.asStateFlow()
 
     init {
         loadClasses()
         loadAllStudents()
+        loadSubjects()
     }
 
     private fun loadClasses() {
@@ -42,6 +47,14 @@ class ClassesViewModel @Inject constructor(
                     student.lastName.firstOrNull()?.uppercaseChar() ?: '#'
                 }.toSortedMap()
                 _allStudents.value = grouped
+            }
+        }
+    }
+
+    private fun loadSubjects() {
+        viewModelScope.launch {
+            repository.getAllSubjects().collect {
+                _subjects.value = it
             }
         }
     }

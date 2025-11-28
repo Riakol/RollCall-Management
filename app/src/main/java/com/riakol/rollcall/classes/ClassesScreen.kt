@@ -83,6 +83,7 @@ fun ClassesScreen(
     viewModel: ClassesViewModel = hiltViewModel()
 ) {
     val classes by viewModel.classes.collectAsState()
+    val subjects by viewModel.subjects.collectAsState()
     val allStudentsGrouped by viewModel.allStudents.collectAsState()
 
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -94,6 +95,7 @@ fun ClassesScreen(
     // --- BOTTOM SHEET LOGIC (Create & Edit) ---
     if (showAddClassSheet) {
         AddClassBottomSheet(
+            existingSubjects = subjects,
             onDismiss = { showAddClassSheet = false },
             onSave = { name, description ->
                 viewModel.addClass(name, description)
@@ -106,6 +108,7 @@ fun ClassesScreen(
         AddClassBottomSheet(
             initialName = schoolClass.name,
             initialDescription = schoolClass.description ?: "",
+            existingSubjects = subjects,
             onDismiss = { classToEdit = null },
             onSave = { name, description ->
                 viewModel.updateClass(schoolClass.id, name, description)
@@ -161,7 +164,6 @@ fun ClassesScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            // ... (Tab Toggle & Search Bar same as before) ...
             // --- TOP TOGGLE ---
             Row(
                 modifier = Modifier

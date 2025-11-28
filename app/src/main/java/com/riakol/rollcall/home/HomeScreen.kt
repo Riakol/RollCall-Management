@@ -286,7 +286,7 @@ fun ActiveLessonItem(lesson: Lesson) {
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Начать урок", color = Color.White)
+                Text(text = "Отметить", color = Color.White)
             }
         }
     }

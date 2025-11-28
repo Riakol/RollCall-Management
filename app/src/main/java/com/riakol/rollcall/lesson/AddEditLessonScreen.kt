@@ -20,12 +20,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -35,7 +37,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,109 +58,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.riakol.domain.model.SchoolClass
-import com.riakol.domain.repository.SchoolRepository
 import com.riakol.rollcall.ui.theme.BackgroundDark
 import com.riakol.rollcall.ui.theme.PrimaryBlue
+import com.riakol.rollcall.ui.theme.StatusRed
 import com.riakol.rollcall.ui.theme.SurfaceDark
 import com.riakol.rollcall.ui.theme.TextGray
 import com.riakol.rollcall.ui.theme.TextWhite
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import java.time.LocalDate
+import com.riakol.rollcall.utils.parseTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import javax.inject.Inject
 
-
-@HiltViewModel
-class AddEditLessonViewModel @Inject constructor(
-    private val repository: SchoolRepository,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
-
-    val lessonId: Long = checkNotNull(savedStateHandle["lessonId"]).toString().toLongOrNull() ?: 0L
-    val dateEpoch: Long = checkNotNull(savedStateHandle["date"]).toString().toLongOrNull() ?: 0L
-
-    private val initialDate = if (dateEpoch > 0) LocalDate.ofEpochDay(dateEpoch) else LocalDate.now()
-
-    private val _classes = MutableStateFlow<List<SchoolClass>>(emptyList())
-    val classes = _classes.asStateFlow()
-
-    var selectedClassId by mutableStateOf<Long?>(null)
-    var subjectName by mutableStateOf("")
-    var startTimeStr by mutableStateOf("08:30")
-    var endTimeStr by mutableStateOf("09:15")
-    var roomNumber by mutableStateOf("")
-    var isRepeatEnabled by mutableStateOf(false)
-    var selectedDays by mutableStateOf(setOf<Int>()) // 1=Mon, 7=Sun
-    var selectedColor by mutableStateOf<String?>(null)
-
-    init {
-        loadClasses()
-        if (lessonId != 0L) {
-            loadLesson()
-        }
-    }
-
-    private fun loadClasses() {
-        viewModelScope.launch {
-            repository.getAllClasses().collect { _classes.value = it }
-        }
-    }
-
-    private fun loadLesson() {
-        viewModelScope.launch {
-            val lesson = repository.getLessonById(lessonId) ?: return@launch
-            val classObj = _classes.value.find { it.name == lesson.className }
-            selectedClassId = classObj?.id // Note: In real app, lesson stores classId, handled by repo
-            subjectName = lesson.subjectName
-            startTimeStr = lesson.startTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-            endTimeStr = lesson.endTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-            roomNumber = lesson.roomNumber
-            selectedColor = lesson.color
-        }
-    }
-
-    fun toggleDay(day: Int) {
-        selectedDays = if (selectedDays.contains(day)) {
-            selectedDays - day
-        } else {
-            selectedDays + day
-        }
-    }
-
-    fun saveLesson(onSuccess: () -> Unit) {
-        viewModelScope.launch {
-            if (selectedClassId == null || subjectName.isBlank()) return@launch
-
-            try {
-                val startT = LocalTime.parse(startTimeStr)
-                val endT = LocalTime.parse(endTimeStr)
-
-                repository.saveLesson(
-                    lessonId = lessonId,
-                    classId = selectedClassId!!,
-                    subjectName = subjectName,
-                    date = initialDate,
-                    startTime = startT,
-                    endTime = endT,
-                    room = roomNumber,
-                    color = selectedColor,
-                    repeatDays = if (isRepeatEnabled) selectedDays.toList() else emptyList()
-                )
-                onSuccess()
-            } catch (e: Exception) {
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -163,7 +77,40 @@ fun AddEditLessonScreen(
     viewModel: AddEditLessonViewModel = hiltViewModel()
 ) {
     val classes by viewModel.classes.collectAsState()
+    val subjects by viewModel.subjects.collectAsState()
     var showClassDropdown by remember { mutableStateOf(false) }
+    var showSubjectDropdown by remember { mutableStateOf(false) }
+
+    var showStartTimePicker by remember { mutableStateOf(false) }
+    var showEndTimePicker by remember { mutableStateOf(false) }
+
+    if (showStartTimePicker) {
+        val (hour, minute) = parseTime(viewModel.startTimeStr)
+        val timePickerState = rememberTimePickerState(initialHour = hour, initialMinute = minute)
+        TimePickerDialog(
+            state = timePickerState,
+            onDismissRequest = { showStartTimePicker = false },
+            onConfirmButton = {
+                val newTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                viewModel.startTimeStr = newTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+                showStartTimePicker = false
+            }
+        )
+    }
+
+    if (showEndTimePicker) {
+        val (hour, minute) = parseTime(viewModel.endTimeStr)
+        val timePickerState = rememberTimePickerState(initialHour = hour, initialMinute = minute)
+        TimePickerDialog(
+            state = timePickerState,
+            onDismissRequest = { showEndTimePicker = false },
+            onConfirmButton = {
+                val newTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                viewModel.endTimeStr = newTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+                showEndTimePicker = false
+            }
+        )
+    }
 
     Scaffold(
         containerColor = BackgroundDark,
@@ -226,23 +173,51 @@ fun AddEditLessonScreen(
 
             Text("Предмет", color = TextGray, fontSize = 14.sp)
             Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
-                value = viewModel.subjectName,
-                onValueChange = { viewModel.subjectName = it },
-                placeholder = { Text("Алгебра", color = TextGray) },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceDark,
-                    unfocusedContainerColor = SurfaceDark,
-                    focusedTextColor = TextWhite,
-                    unfocusedTextColor = TextWhite,
-                    focusedBorderColor = Color.Transparent,
-                    unfocusedBorderColor = Color.Transparent
-                ),
-                shape = RoundedCornerShape(12.dp),
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-            )
+            ExposedDropdownMenuBox(
+                expanded = showSubjectDropdown,
+                onExpandedChange = { showSubjectDropdown = !showSubjectDropdown }
+            ) {
+                OutlinedTextField(
+                    value = viewModel.subjectName,
+                    onValueChange = {
+                        viewModel.subjectName = it
+                        showSubjectDropdown = true
+                    },
+                    placeholder = { Text("Алгебра", color = TextGray) },
+                    modifier = Modifier.fillMaxWidth().menuAnchor(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = SurfaceDark,
+                        unfocusedContainerColor = SurfaceDark,
+                        focusedTextColor = TextWhite,
+                        unfocusedTextColor = TextWhite,
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+                )
+
+                val filteredSubjects = subjects.filter { it.contains(viewModel.subjectName, ignoreCase = true) }
+                if (filteredSubjects.isNotEmpty()) {
+                    ExposedDropdownMenu(
+                        expanded = showSubjectDropdown,
+                        onDismissRequest = { showSubjectDropdown = false },
+                        containerColor = SurfaceDark
+                    ) {
+                        filteredSubjects.forEach { subject ->
+                            DropdownMenuItem(
+                                text = { Text(subject, color = TextWhite) },
+                                onClick = {
+                                    viewModel.subjectName = subject
+                                    showSubjectDropdown = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -251,12 +226,18 @@ fun AddEditLessonScreen(
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Начало", color = TextGray, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    TimeInput(value = viewModel.startTimeStr, onValueChange = { viewModel.startTimeStr = it })
+                    TimeInputBox(
+                        time = viewModel.startTimeStr,
+                        onClick = { showStartTimePicker = true }
+                    )
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Конец", color = TextGray, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(8.dp))
-                    TimeInput(value = viewModel.endTimeStr, onValueChange = { viewModel.endTimeStr = it })
+                    TimeInputBox(
+                        time = viewModel.endTimeStr,
+                        onClick = { showEndTimePicker = true }
+                    )
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text("Кабинет", color = TextGray, fontSize = 14.sp)
@@ -279,6 +260,16 @@ fun AddEditLessonScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                 }
+            }
+
+            viewModel.timeError?.let { error ->
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = error,
+                    color = StatusRed,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -412,5 +403,54 @@ fun ColorCircle(colorHex: String, isSelected: Boolean, onClick: () -> Unit) {
             .clip(CircleShape)
             .background(Color(android.graphics.Color.parseColor(colorHex)))
             .clickable { onClick() }
+    )
+}
+
+@Composable
+fun TimeInputBox(time: String, onClick: () -> Unit) {
+    Surface(
+        color = SurfaceDark,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth().height(56.dp).clickable { onClick() }
+    ) {
+        Box(contentAlignment = Alignment.CenterStart, modifier = Modifier.padding(horizontal = 16.dp)) {
+            Text(text = time, color = TextWhite, fontSize = 16.sp)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerDialog(
+    state: TimePickerState,
+    onDismissRequest: () -> Unit,
+    onConfirmButton: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        containerColor = SurfaceDark,
+        confirmButton = {
+            TextButton(onClick = onConfirmButton) {
+                Text("OK", color = PrimaryBlue)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text("Отмена", color = TextGray)
+            }
+        },
+        text = {
+            TimePicker(
+                state = state,
+                colors = androidx.compose.material3.TimePickerDefaults.colors(
+                    clockDialColor = BackgroundDark,
+                    selectorColor = PrimaryBlue,
+                    periodSelectorBorderColor = PrimaryBlue,
+                    periodSelectorSelectedContainerColor = PrimaryBlue.copy(alpha = 0.5f),
+                    timeSelectorSelectedContainerColor = PrimaryBlue.copy(alpha = 0.5f),
+                    timeSelectorUnselectedContainerColor = BackgroundDark
+                )
+            )
+        }
     )
 }
