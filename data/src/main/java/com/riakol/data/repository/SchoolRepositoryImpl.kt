@@ -184,6 +184,7 @@ class SchoolRepositoryImpl @Inject constructor(
             list.map { item ->
                 Lesson(
                     id = item.lessonId,
+                    classId = item.classId,
                     subjectName = item.subjectName,
                     className = item.className,
                     startTime = Instant.ofEpochMilli(item.startTime).atZone(zoneId).toLocalDateTime(),
@@ -204,6 +205,7 @@ class SchoolRepositoryImpl @Inject constructor(
 
         return Lesson(
             id = entity.lessonId,
+            classId = entity.classId,
             subjectName = subject?.name ?: "Unknown",
             className = classInfo?.name ?: "Unknown",
             startTime = Instant.ofEpochMilli(entity.startTime).atZone(ZoneId.systemDefault()).toLocalDateTime(),

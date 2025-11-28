@@ -4,6 +4,7 @@ import java.time.LocalDateTime
 
 data class Lesson(
     val id: Long = 0,
+    val classId: Long = 0,
     val subjectName: String,
     val className: String,
     val startTime: LocalDateTime,

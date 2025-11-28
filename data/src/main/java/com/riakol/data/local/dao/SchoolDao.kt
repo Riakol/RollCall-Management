@@ -26,6 +26,7 @@ data class StudentWithClassName(
 
 data class LessonStatsTuple(
     val lessonId: Long,
+    val classId: Long,
     val subjectName: String,
     val className: String,
     val startTime: Long,
@@ -51,6 +52,7 @@ interface SchoolDao {
     @Query("""
         SELECT 
             l.lessonId, 
+            l.classId,
             s.name AS subjectName, 
             c.name AS className, 
             l.startTime, 
@@ -178,12 +180,9 @@ interface SchoolDao {
     @Query("SELECT * FROM subjects WHERE subjectId = :id")
     suspend fun getSubjectById(id: Long): SubjectEntity?
 
-    // Для выпадающего списка предметов
     @Query("SELECT * FROM subjects ORDER BY name ASC")
     fun getAllSubjects(): Flow<List<SubjectEntity>>
 
-    // Проверка на пересечение уроков для конкретного класса
-    // Логика: (StartA < EndB) and (EndA > StartB)
     @Query("""
         SELECT count(*) FROM lessons 
         WHERE classId = :classId 

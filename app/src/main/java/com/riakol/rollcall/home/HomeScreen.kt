@@ -4,6 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.riakol.domain.model.Lesson
 import com.riakol.rollcall.home.components.CalendarStrip
 import com.riakol.rollcall.ui.theme.BackgroundDark
@@ -66,6 +68,7 @@ import com.riakol.rollcall.ui.theme.SurfaceDark
 import com.riakol.rollcall.ui.theme.TextGray
 import com.riakol.rollcall.ui.theme.TextWhite
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -139,6 +142,7 @@ fun HomeScreen(
                         LessonItemWrapper(
                             lesson = lesson,
                             isArchive = isArchiveMode,
+                            navController = navController,
                             onEdit = { navController.navigate("lesson_edit/${lesson.id}") },
                             onDelete = { /* TODO: viewModel.deleteLesson(lesson.id) */ }
                         )
@@ -177,6 +181,7 @@ fun EmptyStateView(onAddClick: () -> Unit) {
 fun LessonItemWrapper(
     lesson: Lesson,
     isArchive: Boolean,
+    navController: NavController,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -184,10 +189,11 @@ fun LessonItemWrapper(
     val haptics = LocalHapticFeedback.current
 
     Box {
-        // Обертка для обработки LongClick
         Box(
             modifier = Modifier.combinedClickable(
-                onClick = {},
+                onClick = {
+                    navController.navigate("group/${lesson.classId}")
+                },
                 onLongClick = {
                     haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                     showMenu = true
@@ -197,7 +203,7 @@ fun LessonItemWrapper(
             if (isArchive) {
                 ArchiveLessonItem(lesson)
             } else {
-                ActiveLessonItem(lesson)
+                ActiveLessonItem(lesson, navController)
             }
         }
 
@@ -227,11 +233,28 @@ fun LessonItemWrapper(
 }
 
 @Composable
-fun ActiveLessonItem(lesson: Lesson) {
+fun ActiveLessonItem(
+    lesson: Lesson,
+    navController: NavController
+) {
+    val now = LocalDateTime.now()
+    val lessonStart = lesson.startTime
+    val lessonEnd = lesson.endTime
+
+    val (statusText, statusColor, statusBg) = when {
+        now.isAfter(lessonEnd) -> Triple("Закончен", TextGray, Color.DarkGray)
+        now.isAfter(lessonStart) && now.isBefore(lessonEnd) -> Triple("Идет сейчас", PrimaryBlue, Color(0xFF1A3B5A))
+        else -> Triple("Скоро начнется", StatusGreen, Color(0xFF1B3E20))
+    }
+
     Card(
         colors = CardDefaults.cardColors(containerColor = SurfaceDark),
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                navController.navigate("group/${lesson.classId}")
+            }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -245,10 +268,6 @@ fun ActiveLessonItem(lesson: Lesson) {
                         fontWeight = FontWeight.Bold
                     )
                 }
-
-                val statusText = if (lesson.isFinished) "Завершен" else "Идет сейчас"
-                val statusColor = if (lesson.isFinished) TextGray else PrimaryBlue
-                val statusBg = if (lesson.isFinished) Color.DarkGray else Color(0xFF1A3B5A)
 
                 Surface(
                     color = statusBg,
@@ -281,7 +300,9 @@ fun ActiveLessonItem(lesson: Lesson) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
-                onClick = { /* TODO: Navigate to Attendance */ },
+                onClick = {
+                    navController.navigate("attendance/${lesson.id}")
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()

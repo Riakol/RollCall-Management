@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.riakol.rollcall.attendance.AttendanceScreen
 import com.riakol.rollcall.classes.ClassesScreen
 import com.riakol.rollcall.components.BottomNavigationBar
 import com.riakol.rollcall.group.GroupScreen
@@ -103,6 +104,17 @@ fun MainAppScreen() {
                 arguments = listOf(navArgument("studentId") { type = NavType.LongType })
             ) {
                 AddEditStudentScreen(navController = navController)
+            }
+
+            // 6. Экран Отметки посещаемости
+            composable(
+                route = "attendance/{lessonId}",
+                arguments = listOf(navArgument("lessonId") { type = NavType.LongType })
+            ) {
+                AttendanceScreen(
+                    navController = navController,
+                    viewModel = hiltViewModel()
+                )
             }
 
             composable(

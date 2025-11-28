@@ -25,6 +25,7 @@ fun StudentEntity.toDomain(): Student {
 fun LessonWithDetails.toDomain(): Lesson {
     return Lesson(
         id = this.lesson.lessonId,
+        classId = this.lesson.classId,
         subjectName = this.subject.name,
         className = this.classInfo.name,
         startTime = Instant.ofEpochMilli(this.lesson.startTime).atZone(ZoneId.systemDefault()).toLocalDateTime(),
